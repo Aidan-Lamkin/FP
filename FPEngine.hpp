@@ -61,14 +61,12 @@ private:
     /// \desc last location of the mouse in window coordinates
     glm::vec2 _mousePosition;
 
-    CSCI441::FreeCam* _freeCam;
+    CSCI441::FreeCam* _freeCamPlayer1;
+    CSCI441::FreeCam* _freeCamPlayer2;
 
-    Player* _player;
 
-    std::vector<Enemy*> _enemies = std::vector<Enemy*>();
-    GLint _numberEliminations = 0;
-    GLfloat _health = 50;
-    GLfloat _movementSpeed = .1;
+    Player* _player1;
+    Player* _player2;
 
     std::vector<Bullet*> _bullets = std::vector<Bullet*>();
 
@@ -125,11 +123,7 @@ private:
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
     //refactored methods for update scene
-    void checkEnemyDeaths();
-    void moveEnemies() const;
-    void movePlayerAndCamera() const;
-    void checkEnemyPlayerCollisions();
-    void checkEnemyCollisions();
+    void movePlayersAndCameras() const;
     void moveBullets();
     void checkBulletCollisions();
 

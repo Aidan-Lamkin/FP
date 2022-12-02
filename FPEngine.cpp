@@ -52,8 +52,8 @@ GLfloat getRand() {
 
 FPEngine::FPEngine()
          : CSCI441::OpenGLEngine(4, 1,
-                                 640, 480,
-                                 "A5: The Battle of Five Armies") {
+                                 900, 480,
+                                 "FP") {
 
     for(auto& _key : _keys) _key = GL_FALSE;
 
@@ -61,7 +61,7 @@ FPEngine::FPEngine()
 }
 
 FPEngine::~FPEngine() {
-    delete _freeCam;
+    delete _freeCamPlayer1;
 }
 
 void FPEngine::handleKeyEvent(GLint key, GLint action) {
@@ -81,10 +81,10 @@ void FPEngine::handleKeyEvent(GLint key, GLint action) {
     if(action == GLFW_RELEASE){
         switch(key) {
             case GLFW_KEY_S:
-                _player->resetArms();
+                _player1->resetArms();
                 return;
             case GLFW_KEY_W:
-                _player->resetArms();
+                _player1->resetArms();
                 return;
             default:
                 break;
@@ -100,9 +100,9 @@ void FPEngine::handleMouseButtonEvent(GLint button, GLint action) {
                 _lightingShaderUniformLocations.mvpMatrix,
                 _lightingShaderUniformLocations.normalMatrix,
                 _lightingShaderUniformLocations.materialColor,
-                _player->getPosition(),
-                _player->getDirection(),
-                _player->getAngle()
+                _player1->getPosition(),
+                _player1->getDirection(),
+                _player1->getAngle()
                 ));
     }
 }
@@ -140,6 +140,7 @@ void FPEngine::_setupOpenGL() {
     glDepthFunc( GL_LESS );							                // use less than depth test
 
     glEnable(GL_BLEND);									            // enable blending
+    glEnable(GL_SCISSOR_TEST);                              //Enable scissor test for split screen
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	    // use one minus blending equation
 
     glClearColor( 0.0f, 1.0f, 1.0f, 1.0f );	        // clear the frame buffer to black
@@ -166,28 +167,17 @@ void FPEngine::_setupShaders() {
 void FPEngine::_setupBuffers() {
     CSCI441::setVertexAttributeLocations( _lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vNormal);
 
-    _player = new Player(_lightingShaderProgram->getShaderProgramHandle(),
-                       _lightingShaderUniformLocations.mvpMatrix,
-                       _lightingShaderUniformLocations.normalMatrix,
-                       _lightingShaderUniformLocations.materialColor);
+    _player1 = new Player(_lightingShaderProgram->getShaderProgramHandle(),
+                          _lightingShaderUniformLocations.mvpMatrix,
+                          _lightingShaderUniformLocations.normalMatrix,
+                          _lightingShaderUniformLocations.materialColor,
+                          glm::vec3(25, .1, 25));
 
-    Enemy* firstEnemy = new Enemy(_lightingShaderProgram->getShaderProgramHandle(),
-                                 _lightingShaderUniformLocations.mvpMatrix,
-                                 _lightingShaderUniformLocations.normalMatrix,
-                                 _lightingShaderUniformLocations.materialColor,
-                                 glm::vec3(20,.1,20),
-                                 _health,
-                                 _movementSpeed);
-
-    Enemy* secondEnemy = new Enemy(_lightingShaderProgram->getShaderProgramHandle(),
-                                   _lightingShaderUniformLocations.mvpMatrix,
-                                   _lightingShaderUniformLocations.normalMatrix,
-                                   _lightingShaderUniformLocations.materialColor,
-                                   glm::vec3(-20,.1,-20),
-                                   _health,
-                                   _movementSpeed);
-    _enemies.push_back(firstEnemy);
-    _enemies.push_back(secondEnemy);
+    _player2 = new Player(_lightingShaderProgram->getShaderProgramHandle(),
+                          _lightingShaderUniformLocations.mvpMatrix,
+                          _lightingShaderUniformLocations.normalMatrix,
+                          _lightingShaderUniformLocations.materialColor,
+                          glm::vec3(-25, .1, -25));
 
     _createGroundBuffers();
     _createSkybox();
@@ -233,11 +223,17 @@ void FPEngine::_createGroundBuffers() {
 
 void FPEngine::_setupScene() {
 
-    _freeCam = new CSCI441::FreeCam();
-    _freeCam->setPosition( _player->getPosition() + glm::vec3(0,1.85,0.2));
-    _freeCam->setTheta( M_PI);
-    _freeCam->setPhi( M_PI_2);
-    _freeCam->recomputeOrientation();
+    _freeCamPlayer1 = new CSCI441::FreeCam();
+    _freeCamPlayer1->setPosition(_player1->getPosition() + glm::vec3(0, 1.85, 0.2));
+    _freeCamPlayer1->setTheta(M_PI);
+    _freeCamPlayer1->setPhi(M_PI_2);
+    _freeCamPlayer1->recomputeOrientation();
+
+    _freeCamPlayer2 = new CSCI441::FreeCam();
+    _freeCamPlayer2->setPosition(_player2->getPosition() + glm::vec3(0, 1.85, 0.2));
+    _freeCamPlayer2->setTheta(M_PI);
+    _freeCamPlayer2->setPhi(M_PI_2);
+    _freeCamPlayer2->recomputeOrientation();
 
     glm::vec3 lightColor = glm::vec3(1,1,1);
     glm::vec3 lightDirection = glm::vec3(-1,-1,-1);
@@ -265,7 +261,8 @@ void FPEngine::_cleanupBuffers() {
     CSCI441::deleteObjectVBOs();
 
     fprintf( stdout, "[INFO]: ...deleting models..\n" );
-    delete _player;
+    delete _player1;
+    delete _player2;
 }
 
 //*************************************************************************************
@@ -288,15 +285,13 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
     //draw player
     glm::mat4 modelMtx(1.0f);
-    modelMtx = glm::translate( modelMtx, _player->getPosition());
-    _player->drawPlayer(modelMtx, viewMtx, projMtx);
+    modelMtx = glm::translate(modelMtx, _player1->getPosition());
+    _player1->drawPlayer(modelMtx, viewMtx, projMtx);
 
-    //draw enemies
-    for(Enemy* e: _enemies){
-        glm::mat4 modelMtx(1.0f);
-        modelMtx = glm::translate(modelMtx, e->getPosition());
-        e->drawEnemy(modelMtx, viewMtx, projMtx);
-    }
+    glm::mat4 modelMtx2(1.0f);
+    modelMtx = glm::translate(modelMtx2, _player2->getPosition());
+    _player2->drawPlayer(modelMtx2, viewMtx, projMtx);
+
     //draw bullets
     for(Bullet* b: _bullets){
         glm::mat4 modelMtx(1.0f);
@@ -321,10 +316,7 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
 void FPEngine::_updateScene() {
     //WASD arrow and space inputs for moving player and camera
-    movePlayerAndCamera();
-
-    //updates enemy direction and moves forward
-    moveEnemies();
+    movePlayersAndCameras();
 
     //moves bullets forward, if out of bounds will delete
     moveBullets();
@@ -332,141 +324,77 @@ void FPEngine::_updateScene() {
     //detects if bullet hit an enemy, deletes the bullet if so and decreases enemy health
     checkBulletCollisions();
 
-    //check to see if enemy hit player, if so player dies
-    checkEnemyPlayerCollisions();
-
-    //checks to see if enemy hit enemy and they bounce off each other
-    checkEnemyCollisions();
-
-    //if enemy dies, spawn new one in with increased health and movement speed
-    checkEnemyDeaths();
 }
 
-void FPEngine::movePlayerAndCamera() const {
-    if(_player->isOutOfBounds()){
-        _player->setPosition(glm::vec3(_player->getPosition().x, _player->getPosition().y - 1, _player->getPosition().z));
-        if(_player->getPosition().y < -50){
-            _player->playerDied();
+void FPEngine::movePlayersAndCameras() const {
+    //TODO: expand to both players
+    if(_player1->isOutOfBounds()){
+        _player1->setPosition(glm::vec3(_player1->getPosition().x, _player1->getPosition().y - 1, _player1->getPosition().z));
+        if(_player1->getPosition().y < -50){
+            _player1->playerDied();
         }
     }
 
     // move right
     if( _keys[GLFW_KEY_D] ) {
-        _player->incrementArms();
-        _player->moveRight();
-        _player->checkBounds(WORLD_SIZE);
+        _player1->incrementArms();
+        _player1->moveRight();
+        _player1->checkBounds(WORLD_SIZE);
     }
     // move left
     if( _keys[GLFW_KEY_A] ) {
-        _player->incrementArms();
-        _player->moveLeft();
-        _player->checkBounds(WORLD_SIZE);
+        _player1->incrementArms();
+        _player1->moveLeft();
+        _player1->checkBounds(WORLD_SIZE);
     }
     // move forward
     if( _keys[GLFW_KEY_W] ) {
-        _player->incrementArms();
-        _player->moveForward();
-        _player->checkBounds(WORLD_SIZE);
+        _player1->incrementArms();
+        _player1->moveForward();
+        _player1->checkBounds(WORLD_SIZE);
     }
     // move backward
     if( _keys[GLFW_KEY_S] ) {
-        _player->incrementArms();
-        _player->moveBackward();
-        _player->checkBounds(WORLD_SIZE);
+        _player1->incrementArms();
+        _player1->moveBackward();
+        _player1->checkBounds(WORLD_SIZE);
     }
 
     //jump
     if( _keys[GLFW_KEY_SPACE]){
-        if(!_player->isJump()){
-            _player->setJump(true);
+        if(!_player1->isJump()){
+            _player1->setJump(true);
         }
     }
 
     if(_keys[GLFW_KEY_RIGHT]){
-        _freeCam->rotate(1 * 0.05f,
-                         0);
-        _player->setDirection(_freeCam->getTheta());
+        _freeCamPlayer1->rotate(1 * 0.05f,
+                                0);
+        _player1->setDirection(_freeCamPlayer1->getTheta());
     }
 
     if(_keys[GLFW_KEY_LEFT]){
-        _freeCam->rotate(-1 * 0.05f,
-                         0);
-        _player->setDirection(_freeCam->getTheta());
+        _freeCamPlayer1->rotate(-1 * 0.05f,
+                                0);
+        _player1->setDirection(_freeCamPlayer1->getTheta());
     }
 
-    if(_player->isJump()){
-        _freeCam->setPosition(
-                _player->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(0, _player->getCurrentJumpHeight(), 0) + glm::vec3(.2, 0, .2) * _player->getDirection());
+    if(_player1->isJump()){
+        _freeCamPlayer1->setPosition(
+                _player1->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(0, _player1->getCurrentJumpHeight(), 0) + glm::vec3(.2, 0, .2) * _player1->getDirection());
     }
     else {
-        _freeCam->setPosition(_player->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(.2, 0, .2) * _player->getDirection());
+        _freeCamPlayer1->setPosition(_player1->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(.2, 0, .2) * _player1->getDirection());
     }
-    _freeCam->recomputeOrientation();
+    _freeCamPlayer1->recomputeOrientation();
 }
 
-void FPEngine::moveEnemies() const {
-    glm::vec3 playerPosition = _player->getPosition();
-    for(Enemy* e: _enemies){
-        e->incrementArms();
-        glm::vec3 enemyToPlayer = glm::normalize(e->getPosition() - playerPosition );
-        if(e->getDirection().z < enemyToPlayer.z){
-            e->newDirection(glm::normalize(glm::vec3(e->getDirection().x,0,e->getDirection().z + .08)), _freeCam->getTheta());
-        }
-        if(e->getDirection().z > enemyToPlayer.z){
-            e->newDirection(glm::normalize(glm::vec3(e->getDirection().x,0,e->getDirection().z - .08)), _freeCam->getTheta());
-        }
-        if(e->getDirection().x < enemyToPlayer.x){
-            e->newDirection(glm::normalize(glm::vec3(e->getDirection().x + .08,0,e->getDirection().z)), _freeCam->getTheta());
-        }
-        if(e->getDirection().x > enemyToPlayer.x){
-            e->newDirection(glm::normalize(glm::vec3(e->getDirection().x - .08,0,e->getDirection().z)), _freeCam->getTheta());
-        }
-
-        e->moveForward();
-        e->checkBounds(WORLD_SIZE);
-        if(e->isOutOfBounds()){
-            e->setPosition(glm::vec3(e->getPosition().x, e->getPosition().y - 1, e->getPosition().z));
-            if(e->getPosition().y < -50){
-                e->enemyDied();
-            }
-        }
-    }
-}
-
-void FPEngine::checkEnemyDeaths(){
-    int index = 0;
-    glm::vec3 p = _player->getPosition();
-    while(index < _enemies.size()){
-        if(_enemies[index]->isDead()){
-            _enemies.erase(_enemies.begin() + index);
-            _numberEliminations++;
-            _health += 10;
-            _movementSpeed += .02f;
-            GLfloat x = getRand() * 180 - 90;
-            GLfloat z = getRand() * 180 - 90;
-            while(sqrt(pow(p.x-x,2) + pow(p.z-z,2)) < 30){
-                x = getRand() * 180 - 90;
-                z = getRand() * 180 - 90;
-            }
-            _enemies.push_back(new Enemy(_lightingShaderProgram->getShaderProgramHandle(),
-                               _lightingShaderUniformLocations.mvpMatrix,
-                               _lightingShaderUniformLocations.normalMatrix,
-                               _lightingShaderUniformLocations.materialColor,
-                               glm::vec3(x,.1,z),
-                               _health,
-                               _movementSpeed));
-        }
-        else{
-            index++;
-        }
-    }
-}
 
 void FPEngine::run() {
     //  This is our draw loop - all rendering is done here.  We use a loop to keep the window open
     //	until the user decides to close the window and quit the program.  Without a loop, the
     //	window will display once and then the program exits.
-    while( !glfwWindowShouldClose(_window) && !_player->isDead()) {	        // check if the window was instructed to be closed
+    while( !glfwWindowShouldClose(_window) && !_player1->isDead()) {	        // check if the window was instructed to be closed
         glDrawBuffer( GL_BACK );				        // work with our back frame buffer
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	// clear the current color contents and depth buffer in the window
 
@@ -485,7 +413,7 @@ void FPEngine::run() {
         glm::mat4 projectionMatrix = glm::perspective( 45.0f, (GLfloat) framebufferWidth / (GLfloat) framebufferHeight, 0.001f, 1000.0f );
 
         // set up our look at matrix to position our camera
-        glm::mat4 viewMatrix = _freeCam->getViewMatrix();
+        glm::mat4 viewMatrix = _freeCamPlayer1->getViewMatrix();
 
         // draw everything to the window
         _renderScene(viewMatrix, projectionMatrix);
@@ -496,7 +424,6 @@ void FPEngine::run() {
         glfwPollEvents();				                // check for any events and signal to redraw screen
     }
     //display how many enemies killed
-    std::cout << "Thanks for playing, you eliminated: " << _numberEliminations << " enemies" << std::endl;
 }
 
 //*************************************************************************************
@@ -513,50 +440,6 @@ void FPEngine::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewM
     _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.normalMatrix, normalMatrix);
 }
 
-void FPEngine::checkEnemyPlayerCollisions() {
-    glm::vec3 p = _player->getPosition();
-    for(Enemy* enemy: _enemies){
-        glm::vec3 e = enemy->getPosition();
-        GLfloat d = sqrt(pow(p.x - e.x, 2) + pow(p.y-e.y,2) + pow(p.z - e.z,2));
-        if(d < .5){
-            _player->playerDied();
-        }
-    }
-}
-
-void FPEngine::checkEnemyCollisions() {
-    for(int i = 0; i < _enemies.size(); i++){
-        glm::vec3 e1 = _enemies[i]->getPosition();
-        for (int j = 0; j < _enemies.size(); j++) {
-            if(i != j) {
-                glm::vec3 e2 = _enemies[j]->getPosition();
-                GLfloat d = sqrt(pow(e1.x - e2.x, 2) + pow(e1.y - e2.y, 2) + pow(e1.z - e2.z, 2));
-                if (d < 1) {
-                    _enemies[i]->moveBackward();
-                    _enemies[j]->moveBackward();
-
-                    glm::vec3 ni = glm::normalize(e1 - e2);
-                    glm::vec3 nj = glm::normalize(e2 - e1);
-
-                    glm::vec3 newDirection = dot( _enemies[i]->getDirection() , ni ) * ni;
-                    newDirection = glm::vec3(newDirection.x * 2, newDirection.y * 2, newDirection.z * 2);
-                    newDirection = _enemies[i]->getDirection() - newDirection;
-
-                    _enemies[i]->newDirection(newDirection, _freeCam->getTheta());
-
-                    newDirection = dot( _enemies[j]->getDirection() , nj ) * nj;
-                    newDirection = glm::vec3(newDirection.x * 2, newDirection.y * 2, newDirection.z * 2);
-                    newDirection = _enemies[j]->getDirection() - newDirection;
-
-                    _enemies[j]->newDirection(newDirection, _freeCam->getTheta());
-
-                    _enemies[i]->moveForward();
-                    _enemies[j]->moveForward();
-                }
-            }
-        }
-    }
-}
 
 void FPEngine::moveBullets() {
     for(Bullet* b: _bullets){
@@ -578,17 +461,7 @@ void FPEngine::checkBulletCollisions() {
     while(index < _bullets.size()){
         bool hit = false;
         glm::vec3 b = _bullets[index]->getPosition();
-        for(int j = 0; j < _enemies.size(); j++){
-            glm::vec3 e = _enemies[j]->getPosition();
-            GLfloat d = sqrt(pow(b.x-e.x,2) + pow(b.y-e.y,2) + pow(b.z-e.z,2));
-            if(d < 1){
-                GLfloat damage = _bullets[index]->getDamage();
-                _bullets.erase(_bullets.begin() + index);
-                hit = true;
-                _enemies[j]->decreaseHealth(damage);
-                break;
-            }
-        }
+        //TODO: check bullet collision with players
         if(!hit){
             index++;
         }

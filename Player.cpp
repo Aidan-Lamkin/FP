@@ -10,7 +10,7 @@
 #include <iostream>
 
 Player::Player(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation,
-               GLint materialColorUniformLocation) {
+               GLint materialColorUniformLocation, glm::vec3 startPosition) {
 
     _shaderProgramHandle = shaderProgramHandle;
     _shaderProgramUniformLocations.mvpMtx = mvpMtxUniformLocation;
@@ -18,7 +18,7 @@ Player::Player(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint no
     _shaderProgramUniformLocations.materialColor = materialColorUniformLocation;
 
     _direction = glm::vec3(0,0,1);
-    _position = glm::vec3(0,0.1,0);
+    _position = startPosition;
 
     _colorHead = glm::vec3(1,1,1);
     _transHead = glm::vec3(0, 2.0, 0);
