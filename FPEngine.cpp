@@ -360,13 +360,6 @@ void FPEngine::movePlayersAndCameras() const {
         _player1->checkBounds(WORLD_SIZE);
     }
 
-    //jump
-    if( _keys[GLFW_KEY_SPACE]){
-        if(!_player1->isJump()){
-            _player1->setJump(true);
-        }
-    }
-
     if(_keys[GLFW_KEY_RIGHT]){
         _freeCamPlayer1->rotate(1 * 0.05f,
                                 0);
@@ -378,14 +371,7 @@ void FPEngine::movePlayersAndCameras() const {
                                 0);
         _player1->setDirection(_freeCamPlayer1->getTheta());
     }
-
-    if(_player1->isJump()){
-        _freeCamPlayer1->setPosition(
-                _player1->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(0, _player1->getCurrentJumpHeight(), 0) + glm::vec3(.2, 0, .2) * _player1->getDirection());
-    }
-    else {
-        _freeCamPlayer1->setPosition(_player1->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(.2, 0, .2) * _player1->getDirection());
-    }
+    _freeCamPlayer1->setPosition(_player1->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(.2, 0, .2) * _player1->getDirection());
     _freeCamPlayer1->recomputeOrientation();
 }
 

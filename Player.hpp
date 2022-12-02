@@ -22,9 +22,6 @@ public:
     void moveRight();
     void moveLeft();
 
-    bool isJump();
-    void setJump(bool val);
-
     //death related
     bool isOutOfBounds();
     bool isDead();
@@ -57,10 +54,6 @@ private:
 
     GLfloat _armShift = 0;
     bool _goingUp = true;
-
-    bool _isJumping;
-    int _jumpIndex = 0;
-    std::vector<GLfloat> _jumpPoints = std::vector<GLfloat>();
 
     //Life bools
     bool _outOfBounds = false;

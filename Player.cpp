@@ -49,26 +49,12 @@ Player::Player(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint no
 
     _movementSpeed = 0.4f;
 
-    for(int i = 1; i < 21; i++){
-        GLfloat t = i * .05;
-        _jumpPoints.push_back(-2 * pow(t, 2) + 2 * t);
-    }
-
 }
 
 void Player::drawPlayer(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
     glUseProgram(_shaderProgramHandle);
 
     modelMtx = glm::rotate(modelMtx, _rotationAngle, CSCI441::Y_AXIS);
-
-    if(_isJumping){
-        modelMtx = glm::translate(modelMtx, glm::vec3(0, _jumpPoints[_jumpIndex],0));
-        _jumpIndex++;
-        if(_jumpIndex == _jumpPoints.size()){
-            _jumpIndex = 0;
-            _isJumping = false;
-        }
-    }
 
     //hierarchical draw methods
     _drawPlayerHead(modelMtx, viewMtx, projMtx);
@@ -224,20 +210,8 @@ void Player::resetArms() {
     _transBarrel.y = 1.8;
 }
 
-bool Player::isJump() {
-    return _isJumping;
-}
-
-void Player::setJump(bool val) {
-    _isJumping = val;
-}
-
 GLfloat Player::getAngle() {
     return _rotationAngle;
-}
-
-GLfloat Player::getCurrentJumpHeight() {
-    return _jumpPoints[_jumpIndex];
 }
 
 void Player::checkBounds(GLfloat worldSize) {
