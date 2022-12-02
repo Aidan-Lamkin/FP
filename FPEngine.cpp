@@ -52,7 +52,7 @@ GLfloat getRand() {
 
 FPEngine::FPEngine()
          : CSCI441::OpenGLEngine(4, 1,
-                                 900, 480,
+                                 1080, 960,
                                  "FP") {
 
     for(auto& _key : _keys) _key = GL_FALSE;
@@ -62,6 +62,7 @@ FPEngine::FPEngine()
 
 FPEngine::~FPEngine() {
     delete _freeCamPlayer1;
+    delete _freeCamPlayer2;
 }
 
 void FPEngine::handleKeyEvent(GLint key, GLint action) {
@@ -140,7 +141,6 @@ void FPEngine::_setupOpenGL() {
     glDepthFunc( GL_LESS );							                // use less than depth test
 
     glEnable(GL_BLEND);									            // enable blending
-    glEnable(GL_SCISSOR_TEST);                              //Enable scissor test for split screen
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	    // use one minus blending equation
 
     glClearColor( 0.0f, 1.0f, 1.0f, 1.0f );	        // clear the frame buffer to black
@@ -283,13 +283,13 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
 
-    //draw player
+    //draw players
     glm::mat4 modelMtx(1.0f);
     modelMtx = glm::translate(modelMtx, _player1->getPosition());
     _player1->drawPlayer(modelMtx, viewMtx, projMtx);
 
     glm::mat4 modelMtx2(1.0f);
-    modelMtx = glm::translate(modelMtx2, _player2->getPosition());
+    modelMtx2 = glm::translate(modelMtx2, _player2->getPosition());
     _player2->drawPlayer(modelMtx2, viewMtx, projMtx);
 
     //draw bullets
@@ -396,26 +396,19 @@ void FPEngine::run() {
     //	window will display once and then the program exits.
     while( !glfwWindowShouldClose(_window) && !_player1->isDead()) {	        // check if the window was instructed to be closed
         glDrawBuffer( GL_BACK );				        // work with our back frame buffer
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	// clear the current color contents and depth buffer in the window
 
-        // Get the size of our framebuffer.  Ideally this should be the same dimensions as our window, but
-        // when using a Retina display the actual window can be larger than the requested window.  Therefore,
-        // query what the actual size of the window we are rendering to is.
         GLint framebufferWidth, framebufferHeight;
         glfwGetFramebufferSize( _window, &framebufferWidth, &framebufferHeight );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );	// clear the current color contents and depth buffer in the window
 
-        // update the viewport - tell OpenGL we want to render to the whole window
-        glViewport( 0, 0, framebufferWidth, framebufferHeight );
-
-        // set the projection matrix based on the window size
-        // use a perspective projection that ranges
-        // with a FOV of 45 degrees, for our current aspect ratio, and Z ranges from [0.001, 1000].
         glm::mat4 projectionMatrix = glm::perspective( 45.0f, (GLfloat) framebufferWidth / (GLfloat) framebufferHeight, 0.001f, 1000.0f );
-
-        // set up our look at matrix to position our camera
         glm::mat4 viewMatrix = _freeCamPlayer1->getViewMatrix();
+        glViewport( 0, 0, framebufferWidth, framebufferHeight / (double)2);
 
         // draw everything to the window
+        _renderScene(viewMatrix, projectionMatrix);
+        glViewport(0, framebufferHeight / (double)2, framebufferWidth, framebufferHeight / (double)2);
+        viewMatrix = _freeCamPlayer2->getViewMatrix();
         _renderScene(viewMatrix, projectionMatrix);
 
         _updateScene();
@@ -423,7 +416,6 @@ void FPEngine::run() {
         glfwSwapBuffers(_window);                       // flush the OpenGL commands and make sure they get rendered!
         glfwPollEvents();				                // check for any events and signal to redraw screen
     }
-    //display how many enemies killed
 }
 
 //*************************************************************************************
