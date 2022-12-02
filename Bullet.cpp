@@ -9,13 +9,14 @@
 #include <CSCI441/OpenGLUtils.hpp>
 
 Bullet::Bullet(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation,
-               GLint materialColorUniformLocation, glm::vec3 position, glm::vec3 direction, GLfloat angle) {
+               GLint materialColorUniformLocation, glm::vec3 position, glm::vec3 direction, GLfloat angle, int shotBy) {
     _shaderProgramHandle = shaderProgramHandle;
     _shaderProgramUniformLocations.mvpMtx = mvpMtxUniformLocation;
     _shaderProgramUniformLocations.normalMtx = normalMtxUniformLocation;
     _shaderProgramUniformLocations.materialColor = materialColorUniformLocation;
 
     _angle = angle;
+    this->shotBy = shotBy;
 
     _direction = direction;
     _position = position;

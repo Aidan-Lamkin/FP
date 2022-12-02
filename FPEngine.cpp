@@ -72,7 +72,6 @@ void FPEngine::handleKeyEvent(GLint key, GLint action) {
     if(action == GLFW_PRESS) {
         switch( key ) {
             // quit!
-            case GLFW_KEY_Q:
             case GLFW_KEY_ESCAPE:
                 setWindowShouldClose();
                 break;
@@ -87,6 +86,12 @@ void FPEngine::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_W:
                 _player1->resetArms();
                 return;
+            case GLFW_KEY_K:
+                _player2->resetArms();
+                return;
+            case GLFW_KEY_I:
+                _player2->resetArms();
+                return;
             default:
                 break;
         }
@@ -96,15 +101,7 @@ void FPEngine::handleKeyEvent(GLint key, GLint action) {
 void FPEngine::handleMouseButtonEvent(GLint button, GLint action) {
     // if the event is for the left mouse button
     if( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        _bullets.push_back(new Bullet(
-                _lightingShaderProgram->getShaderProgramHandle(),
-                _lightingShaderUniformLocations.mvpMatrix,
-                _lightingShaderUniformLocations.normalMatrix,
-                _lightingShaderUniformLocations.materialColor,
-                _player1->getPosition(),
-                _player1->getDirection(),
-                _player1->getAngle()
-                ));
+
     }
 }
 
@@ -112,11 +109,6 @@ void FPEngine::handleCursorPositionEvent(glm::vec2 currMousePosition) {
     // if mouse hasn't moved in the window, prevent camera from flipping out
     if(_mousePosition.x == MOUSE_UNINITIALIZED) {
         _mousePosition = currMousePosition;
-    }
-
-    //rotate the camera by the distance the mouse moved
-    if(abs(currMousePosition.x - 320) > 10) {
-
     }
 
     // update the mouse position
@@ -315,7 +307,6 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 }
 
 void FPEngine::_updateScene() {
-    //WASD arrow and space inputs for moving player and camera
     movePlayersAndCameras();
 
     //moves bullets forward, if out of bounds will delete
@@ -326,8 +317,7 @@ void FPEngine::_updateScene() {
 
 }
 
-void FPEngine::movePlayersAndCameras() const {
-    //TODO: expand to both players
+void FPEngine::movePlayersAndCameras() {
     if(_player1->isOutOfBounds()){
         _player1->setPosition(glm::vec3(_player1->getPosition().x, _player1->getPosition().y - 1, _player1->getPosition().z));
         if(_player1->getPosition().y < -50){
@@ -360,19 +350,91 @@ void FPEngine::movePlayersAndCameras() const {
         _player1->checkBounds(WORLD_SIZE);
     }
 
-    if(_keys[GLFW_KEY_RIGHT]){
+    if(_keys[GLFW_KEY_E]){
         _freeCamPlayer1->rotate(1 * 0.05f,
                                 0);
         _player1->setDirection(_freeCamPlayer1->getTheta());
     }
-
-    if(_keys[GLFW_KEY_LEFT]){
+    //rotate
+    if(_keys[GLFW_KEY_Q]){
         _freeCamPlayer1->rotate(-1 * 0.05f,
                                 0);
         _player1->setDirection(_freeCamPlayer1->getTheta());
     }
     _freeCamPlayer1->setPosition(_player1->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(.2, 0, .2) * _player1->getDirection());
     _freeCamPlayer1->recomputeOrientation();
+
+    if(_player2->isOutOfBounds()){
+        _player2->setPosition(glm::vec3(_player2->getPosition().x, _player2->getPosition().y - 1, _player2->getPosition().z));
+        if(_player2->getPosition().y < -50){
+            _player2->playerDied();
+        }
+    }
+
+    // move right
+    if( _keys[GLFW_KEY_L] ) {
+        _player2->incrementArms();
+        _player2->moveRight();
+        _player2->checkBounds(WORLD_SIZE);
+    }
+    // move left
+    if( _keys[GLFW_KEY_J] ) {
+        _player2->incrementArms();
+        _player2->moveLeft();
+        _player2->checkBounds(WORLD_SIZE);
+    }
+    // move forward
+    if( _keys[GLFW_KEY_I] ) {
+        _player2->incrementArms();
+        _player2->moveForward();
+        _player2->checkBounds(WORLD_SIZE);
+    }
+    // move backward
+    if( _keys[GLFW_KEY_K] ) {
+        _player2->incrementArms();
+        _player2->moveBackward();
+        _player2->checkBounds(WORLD_SIZE);
+    }
+    //rotate
+    if(_keys[GLFW_KEY_O]){
+        _freeCamPlayer2->rotate(1 * 0.05f,
+                                0);
+        _player2->setDirection(_freeCamPlayer2->getTheta());
+    }
+
+    if(_keys[GLFW_KEY_U]){
+        _freeCamPlayer2->rotate(-1 * 0.05f,
+                                0);
+        _player2->setDirection(_freeCamPlayer2->getTheta());
+    }
+    _freeCamPlayer2->setPosition(_player2->getPosition() + glm::vec3(0, 1.85, 0.0) + glm::vec3(.2, 0, .2) * _player2->getDirection());
+    _freeCamPlayer2->recomputeOrientation();
+
+    //shoot buttons
+    if(_keys[GLFW_KEY_LEFT_SHIFT]){
+        _bullets.push_back(new Bullet(
+                _lightingShaderProgram->getShaderProgramHandle(),
+                _lightingShaderUniformLocations.mvpMatrix,
+                _lightingShaderUniformLocations.normalMatrix,
+                _lightingShaderUniformLocations.materialColor,
+                _player1->getPosition(),
+                _player1->getDirection(),
+                _player1->getAngle(),
+                1
+        ));
+    }
+    if(_keys[GLFW_KEY_SLASH]){
+        _bullets.push_back(new Bullet(
+                _lightingShaderProgram->getShaderProgramHandle(),
+                _lightingShaderUniformLocations.mvpMatrix,
+                _lightingShaderUniformLocations.normalMatrix,
+                _lightingShaderUniformLocations.materialColor,
+                _player2->getPosition(),
+                _player2->getDirection(),
+                _player2->getAngle(),
+                2
+        ));
+    }
 }
 
 
@@ -380,7 +442,7 @@ void FPEngine::run() {
     //  This is our draw loop - all rendering is done here.  We use a loop to keep the window open
     //	until the user decides to close the window and quit the program.  Without a loop, the
     //	window will display once and then the program exits.
-    while( !glfwWindowShouldClose(_window) && !_player1->isDead()) {	        // check if the window was instructed to be closed
+    while( !glfwWindowShouldClose(_window) && _player1->deathCount < 3 && _player2->deathCount < 3) {	        // check if the window was instructed to be closed
         glDrawBuffer( GL_BACK );				        // work with our back frame buffer
 
         GLint framebufferWidth, framebufferHeight;
@@ -401,6 +463,12 @@ void FPEngine::run() {
 
         glfwSwapBuffers(_window);                       // flush the OpenGL commands and make sure they get rendered!
         glfwPollEvents();				                // check for any events and signal to redraw screen
+    }
+    if(_player1->deathCount == 3){
+        std::cout << "Player 2 Won" << std::endl;
+    }
+    else{
+        std::cout << "Player 1 Won" << std::endl;
     }
 }
 
@@ -436,12 +504,35 @@ void FPEngine::moveBullets() {
 
 void FPEngine::checkBulletCollisions() {
     int index = 0;
+    double hitRadius = 1.0;
     while(index < _bullets.size()){
         bool hit = false;
         glm::vec3 b = _bullets[index]->getPosition();
-        //TODO: check bullet collision with players
+
+        glm::vec3 p1 = _player1->getPosition();
+        glm::vec3 p2 = _player2->getPosition();
+
+        double d1 = sqrt(pow(b.x - p1.x, 2) + pow(b.y - p1.y, 2) + pow(b.z - p1.z, 2));
+        double d2 = sqrt(pow(b.x - p2.x, 2) + pow(b.y - p2.y, 2) + pow(b.z - p2.z, 2));
+        if(d1 < hitRadius && _bullets[index]->shotBy != 1){
+            hit = true;
+            _player1->health -= _bullets[index]->getDamage();
+            if(_player1->health <= 0){
+                _player1->playerDied();
+            }
+        }
+        else if(d2 < hitRadius && _bullets[index]->shotBy != 2){
+            hit = true;
+            _player2->health -= _bullets[index]->getDamage();
+            if(_player2->health <= 0){
+                _player2->playerDied();
+            }
+        }
         if(!hit){
             index++;
+        }
+        else{
+            _bullets.erase(_bullets.begin() + index);
         }
     }
 }

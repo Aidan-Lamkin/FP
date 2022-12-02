@@ -44,6 +44,9 @@ public:
     void resetArms();
 
     void checkBounds(GLfloat worldSize);
+
+    int deathCount;
+    int health = 100;
 private:
 
     //movement related members

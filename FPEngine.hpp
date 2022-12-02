@@ -123,7 +123,7 @@ private:
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
 
     //refactored methods for update scene
-    void movePlayersAndCameras() const;
+    void movePlayersAndCameras();
     void moveBullets();
     void checkBulletCollisions();
 

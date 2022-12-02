@@ -49,6 +49,7 @@ Player::Player(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint no
 
     _movementSpeed = 0.4f;
 
+    deathCount = 0;
 }
 
 void Player::drawPlayer(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {
@@ -233,5 +234,10 @@ void Player::setPosition(glm::vec3 newPosition) {
 }
 
 void Player::playerDied() {
-    _dead = true;
+    deathCount++;
+    float x = ((GLfloat)rand() / (GLfloat)RAND_MAX) * 200 - 100;
+    float z = ((GLfloat)rand() / (GLfloat)RAND_MAX) * 200 - 100;
+    _position = glm::vec3(x,.1,z);
+    health = 100;
+
 }
