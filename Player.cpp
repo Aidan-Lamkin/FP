@@ -9,12 +9,12 @@
 #include <CSCI441/OpenGLUtils.hpp>
 #include <iostream>
 
-Player::Player(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation,
+Player::Player(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation,
                GLint materialColorUniformLocation, glm::vec3 startPosition) {
 
     _shaderProgramHandle = shaderProgramHandle;
     _shaderProgramUniformLocations.mvpMtx = mvpMtxUniformLocation;
-    _shaderProgramUniformLocations.normalMtx = normalMtxUniformLocation;
+    //_shaderProgramUniformLocations.normalMtx = normalMtxUniformLocation;
     _shaderProgramUniformLocations.materialColor = materialColorUniformLocation;
 
     _direction = glm::vec3(0,0,1);
@@ -112,8 +112,8 @@ void Player::setDirection(GLfloat angle) {
 void Player::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     glProgramUniformMatrix4fv( _shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1, GL_FALSE, &mvpMtx[0][0] );
-    glm::mat3 normalMtx = glm::mat3( glm::transpose( glm::inverse( modelMtx )));
-    glProgramUniformMatrix3fv( _shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, &normalMtx[0][0] );
+    //glm::mat3 normalMtx = glm::mat3( glm::transpose( glm::inverse( modelMtx )));
+    //glProgramUniformMatrix3fv( _shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, &normalMtx[0][0] );
 }
 
 void Player::_drawPlayerHead(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) {

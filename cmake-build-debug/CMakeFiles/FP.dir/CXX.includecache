@@ -6,16 +6,6 @@
 
 #IncludeRegexTransform: 
 
-/Users/aidan/Documents/CSCI_441/FP/Bullet.cpp
-Bullet.h
-/Users/aidan/Documents/CSCI_441/FP/Bullet.h
-glm/gtc/matrix_transform.hpp
--
-CSCI441/objects.hpp
--
-CSCI441/OpenGLUtils.hpp
--
-
 /Users/aidan/Documents/CSCI_441/FP/Bullet.h
 GL/glew.h
 -
@@ -64,12 +54,6 @@ GL/glew.h
 glm/glm.hpp
 -
 vector
--
-
-/Users/aidan/Documents/CSCI_441/FP/main.cpp
-FPEngine.hpp
-/Users/aidan/Documents/CSCI_441/FP/FPEngine.hpp
-stb_image.h
 -
 
 /usr/local/include/CSCI441/Camera.hpp

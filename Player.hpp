@@ -13,7 +13,7 @@
 class Player {
 public:
     //constructor and draw
-    Player( GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation, GLint materialColorUniformLocation, glm::vec3 startPosition );
+    Player( GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint materialColorUniformLocation, glm::vec3 startPosition );
     void drawPlayer(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx);
 
     //movement
@@ -68,7 +68,7 @@ private:
 
     struct ShaderProgramUniformLocations {
         GLint mvpMtx;
-        GLint normalMtx;
+        //GLint normalMtx;
         GLint materialColor;
     } _shaderProgramUniformLocations;
 

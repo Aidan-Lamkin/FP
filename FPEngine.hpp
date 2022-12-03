@@ -81,18 +81,48 @@ private:
     void _createGroundBuffers();
 
     /// \desc shader program that performs lighting
-    CSCI441::ShaderProgram* _lightingShaderProgram = nullptr;   // the wrapper for our shader program
+    CSCI441::ShaderProgram* _groundShaderProgram = nullptr;   // the wrapper for our shader program
     /// \desc stores the locations of all of our shader uniforms
-    struct LightingShaderUniformLocations {
-        /// \desc precomputed MVP matrix location
+    struct groundShaderUniformLocations {
         GLint mvpMatrix;
-        /// \desc material diffuse color location
-        GLint materialColor;
-        GLint lightColor;
-        GLint lightDirection;
-        GLint normalMatrix;
+        GLint model;
+        GLint player1LightColor;
+        GLint player1LightPosition;
+        GLint player2LightColor;
+        GLint player2LightPosition;
+        GLint groundTexture;
+        GLint viewPos;
+    } _groundShaderUniformLocations;
 
-    } _lightingShaderUniformLocations;
+    /// \desc stores the locations of all of our shader attributes
+    struct groundShaderAttributeLocations {
+        /// \desc vertex position location
+        GLint vPos;
+        GLint normal;
+    } _groundShaderAttributeLocations;
+
+    /// \desc shader program that performs lighting
+    CSCI441::ShaderProgram* _playerShaderProgram = nullptr;   // the wrapper for our shader program
+    /// \desc stores the locations of all of our shader uniforms
+    struct playerShaderUniformLocations {
+        GLint mvpMatrix;
+        GLint model;
+        GLint player1LightColor;
+        GLint player1LightPosition;
+        GLint player2LightColor;
+        GLint player2LightPosition;
+        GLint viewPos;
+        GLint materialColor;
+    } _playerShaderUniformLocations;
+
+    /// \desc stores the locations of all of our shader attributes
+    struct playerShaderAttributeLocations {
+        /// \desc vertex position location
+        GLint vPos;
+        GLint normal;
+    } _playerShaderAttributeLocations;
+
+
 
     unsigned int skyBoxVAO, skyboxVBO, skyboxEBO;
     unsigned int cubemapTexture;
@@ -107,12 +137,7 @@ private:
     struct SkyboxShaderAttributeLocations{
         GLint aPos;
     }_skyboxShaderAttributeLocations;
-    /// \desc stores the locations of all of our shader attributes
-    struct LightingShaderAttributeLocations {
-        /// \desc vertex position location
-        GLint vPos;
-        GLint vNormal;
-    } _lightingShaderAttributeLocations;
+
 
     /// \desc precomputes the matrix uniforms CPU-side and then sends them
     /// to the GPU to be used in the shader for each vertex.  It is more efficient
@@ -121,6 +146,18 @@ private:
     /// \param viewMtx camera view matrix
     /// \param projMtx camera projection matrix
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
+
+    GLuint _loadAndRegisterTexture(const char* FILENAME);
+
+    /// \desc total number of textures in our scene
+    static constexpr GLuint NUM_TEXTURES = 1;
+    /// \desc used to index through our texture array to give named access
+    enum TEXTURE_ID {
+        /// \desc metal texture
+        GROUND = 0
+    };
+    /// \desc texture handles for our textures
+    GLuint _texHandles[NUM_TEXTURES];
 
     //refactored methods for update scene
     void movePlayersAndCameras();

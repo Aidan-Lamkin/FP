@@ -139,14 +139,31 @@ void FPEngine::_setupOpenGL() {
 }
 
 void FPEngine::_setupShaders() {
-    _lightingShaderProgram = new CSCI441::ShaderProgram("shaders/flatShader.v.glsl", "shaders/flatShader.f.glsl" );
-    _lightingShaderUniformLocations.mvpMatrix = _lightingShaderProgram->getUniformLocation("mvpMatrix");
-    _lightingShaderUniformLocations.materialColor = _lightingShaderProgram->getUniformLocation("materialColor");
-    _lightingShaderUniformLocations.lightColor = _lightingShaderProgram->getUniformLocation("lightColor");
-    _lightingShaderUniformLocations.lightDirection = _lightingShaderProgram->getUniformLocation("lightDirection");
-    _lightingShaderUniformLocations.normalMatrix = _lightingShaderProgram->getUniformLocation("normalMatrix");
-    _lightingShaderAttributeLocations.vPos = _lightingShaderProgram->getAttributeLocation("vPos");
-    _lightingShaderAttributeLocations.vNormal = _lightingShaderProgram->getAttributeLocation("vNormal");
+    _groundShaderProgram = new CSCI441::ShaderProgram("shaders/groundShader.v.glsl", "shaders/groundShader.f.glsl" );
+    _groundShaderUniformLocations.mvpMatrix = _groundShaderProgram->getUniformLocation("mvpMatrix");
+    _groundShaderUniformLocations.model = _groundShaderProgram->getUniformLocation("model");
+    _groundShaderUniformLocations.player1LightColor = _groundShaderProgram->getUniformLocation("player1LightColor");
+    _groundShaderUniformLocations.player1LightPosition = _groundShaderProgram->getUniformLocation("player1LightPosition");
+    _groundShaderUniformLocations.player2LightColor = _groundShaderProgram->getUniformLocation("player2LightColor");
+    _groundShaderUniformLocations.player2LightPosition = _groundShaderProgram->getUniformLocation("player2LightPosition");
+    _groundShaderUniformLocations.groundTexture = _groundShaderProgram->getUniformLocation("groundTexture");
+    _groundShaderUniformLocations.viewPos = _groundShaderProgram->getUniformLocation("viewPos");
+
+    _groundShaderAttributeLocations.vPos = _groundShaderProgram->getAttributeLocation("vPos");
+    _groundShaderAttributeLocations.normal = _groundShaderProgram->getAttributeLocation("normal");
+
+    _playerShaderProgram = new CSCI441::ShaderProgram("shaders/playerShader.v.glsl","shaders/playerShader.f.glsl");
+    _playerShaderUniformLocations.mvpMatrix = _playerShaderProgram->getUniformLocation("mvpMatrix");
+    _playerShaderUniformLocations.model = _playerShaderProgram->getUniformLocation("model");
+    _playerShaderUniformLocations.player1LightColor = _playerShaderProgram->getUniformLocation("player1LightColor");
+    _playerShaderUniformLocations.player1LightPosition = _playerShaderProgram->getUniformLocation("player1LightPosition");
+    _playerShaderUniformLocations.player2LightColor = _playerShaderProgram->getUniformLocation("player2LightColor");
+    _playerShaderUniformLocations.player2LightPosition = _playerShaderProgram->getUniformLocation("player2LightPosition");
+    _playerShaderUniformLocations.viewPos = _playerShaderProgram->getUniformLocation("viewPos");
+    _playerShaderUniformLocations.materialColor = _playerShaderProgram->getUniformLocation("materialColor");
+
+    _playerShaderAttributeLocations.vPos = _playerShaderProgram->getAttributeLocation("vPos");
+    _playerShaderAttributeLocations.normal = _playerShaderProgram->getAttributeLocation("normal");
 
     _skyboxShaderProgram = new CSCI441::ShaderProgram("shaders/skybox.v.glsl", "shaders/skybox.f.glsl");
     _skyboxShaderUniformLocations.projection = _skyboxShaderProgram->getUniformLocation("projection");
@@ -157,18 +174,16 @@ void FPEngine::_setupShaders() {
 
 //initializes player and two enemies
 void FPEngine::_setupBuffers() {
-    CSCI441::setVertexAttributeLocations( _lightingShaderAttributeLocations.vPos, _lightingShaderAttributeLocations.vNormal);
+    CSCI441::setVertexAttributeLocations(_groundShaderAttributeLocations.vPos, _groundShaderAttributeLocations.normal);
 
-    _player1 = new Player(_lightingShaderProgram->getShaderProgramHandle(),
-                          _lightingShaderUniformLocations.mvpMatrix,
-                          _lightingShaderUniformLocations.normalMatrix,
-                          _lightingShaderUniformLocations.materialColor,
+    _player1 = new Player(_playerShaderProgram->getShaderProgramHandle(),
+                          _playerShaderUniformLocations.mvpMatrix,
+                          _playerShaderUniformLocations.materialColor,
                           glm::vec3(25, .1, 25));
 
-    _player2 = new Player(_lightingShaderProgram->getShaderProgramHandle(),
-                          _lightingShaderUniformLocations.mvpMatrix,
-                          _lightingShaderUniformLocations.normalMatrix,
-                          _lightingShaderUniformLocations.materialColor,
+    _player2 = new Player(_playerShaderProgram->getShaderProgramHandle(),
+                          _playerShaderUniformLocations.mvpMatrix,
+                          _playerShaderUniformLocations.materialColor,
                           glm::vec3(-25, .1, -25));
 
     _createGroundBuffers();
@@ -202,14 +217,16 @@ void FPEngine::_createGroundBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(groundQuad), groundQuad, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vPos);
-    glVertexAttribPointer(_lightingShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(_groundShaderAttributeLocations.vPos);
+    glVertexAttribPointer(_groundShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
-    glEnableVertexAttribArray(_lightingShaderAttributeLocations.vNormal);
-    glVertexAttribPointer(_lightingShaderAttributeLocations.vNormal, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(_groundShaderAttributeLocations.normal);
+    glVertexAttribPointer(_groundShaderAttributeLocations.normal, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    _texHandles[TEXTURE_ID::GROUND] = _loadAndRegisterTexture("data/bottom.jpg");
 }
 
 
@@ -227,11 +244,24 @@ void FPEngine::_setupScene() {
     _freeCamPlayer2->setPhi(M_PI_2);
     _freeCamPlayer2->recomputeOrientation();
 
-    glm::vec3 lightColor = glm::vec3(1,1,1);
-    glm::vec3 lightDirection = glm::vec3(-1,-1,-1);
-    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(),_lightingShaderUniformLocations.lightColor,1,&lightColor[0]);
-    glProgramUniform3fv(_lightingShaderProgram->getShaderProgramHandle(),_lightingShaderUniformLocations.lightDirection,1,&lightDirection[0]);
+    glm::vec3 lightColor1 = glm::vec3(0,1,0);
+    glm::vec3 lightPosition1 = glm::vec3(10, 5 ,10);
 
+    //glm::vec3 lightPosition1 = glm::vec3(_player1->getPosition().x, _player1->getPosition().y + 5, _player1->getPosition().z);
+    glm::vec3 lightColor2 = glm::vec3(0,1,0);
+    glm::vec3 lightPosition2 = glm::vec3(-10, 5 ,-10);
+
+    //glm::vec3 lightPosition2 = glm::vec3(_player2->getPosition().x, _player2->getPosition().y + 5, _player2->getPosition().z);
+
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
+
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
 
 }
 
@@ -241,7 +271,9 @@ void FPEngine::_setupScene() {
 
 void FPEngine::_cleanupShaders() {
     fprintf( stdout, "[INFO]: ...deleting Shaders.\n" );
-    delete _lightingShaderProgram;
+    delete _groundShaderProgram;
+    delete _skyboxShaderProgram;
+    delete _playerShaderProgram;
 }
 
 void FPEngine::_cleanupBuffers() {
@@ -263,8 +295,7 @@ void FPEngine::_cleanupBuffers() {
 
 void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // use our lighting shader program
-    _lightingShaderProgram->useProgram();
-
+    _groundShaderProgram->useProgram();
     // draw the ground plane
     /*TODO render using phong-illumination want
      * to pass two lights that are positioned at players
@@ -273,10 +304,6 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
      * */
     glm::mat4 groundModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE, 1.0f, WORLD_SIZE));
     _computeAndSendMatrixUniforms(groundModelMtx, viewMtx, projMtx);
-
-    glm::vec3 groundColor(0.3f, 0.8f, 0.2f);
-    glUniform3fv(_lightingShaderUniformLocations.materialColor, 1, &groundColor[0]);
-
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
 
@@ -287,23 +314,46 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
      *
      * Meets unique fragment requirement
      */
+
+    _playerShaderProgram->useProgram();
+
     glm::mat4 modelMtx(1.0f);
     modelMtx = glm::translate(modelMtx, _player1->getPosition());
+    glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
+    // then send it to the shader on the GPU to apply to every vertex
+    _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.mvpMatrix, mvpMtx);
+    if(viewMtx == _freeCamPlayer1->getViewMatrix()) {
+        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.viewPos, _freeCamPlayer1->getPosition());
+    }
+    else{
+        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.viewPos, _freeCamPlayer2->getPosition());
+    }
+    _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.model, modelMtx);
     _player1->drawPlayer(modelMtx, viewMtx, projMtx);
 
     glm::mat4 modelMtx2(1.0f);
     modelMtx2 = glm::translate(modelMtx2, _player2->getPosition());
+    glm::mat4 mvpMtx2 = projMtx * viewMtx * modelMtx2;
+
+    _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.mvpMatrix, mvpMtx2);
+    if(viewMtx == _freeCamPlayer1->getViewMatrix()) {
+        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.viewPos, _freeCamPlayer1->getPosition());
+    }
+    else{
+        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.viewPos, _freeCamPlayer2->getPosition());
+    }
+    _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.model, modelMtx2);
     _player2->drawPlayer(modelMtx2, viewMtx, projMtx);
 
     //draw bullets
     /*TODO render bullets using geometry shader by rendering quad
      * Meets unique vertex/geometric/tesselation requirement
      */
-    for(Bullet* b: _bullets){
-        glm::mat4 modelMtx(1.0f);
-        modelMtx = glm::translate(modelMtx, b->getPosition());
-        b->drawBullet(modelMtx, viewMtx, projMtx);
-    }
+//    for(Bullet* b: _bullets){
+//        glm::mat4 modelMtx(1.0f);
+//        modelMtx = glm::translate(modelMtx, b->getPosition());
+//        b->drawBullet(modelMtx, viewMtx, projMtx);
+//    }
 
     //draw skybox
     //meets one of the texture requirements
@@ -318,6 +368,45 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
     glDepthFunc(GL_LESS);
+}
+
+GLuint FPEngine::_loadAndRegisterTexture(const char* FILENAME) {
+    // our handle to the GPU
+    GLuint textureHandle = 0;
+
+    // enable setting to prevent image from being upside down
+    stbi_set_flip_vertically_on_load(true);
+
+    // will hold image parameters after load
+    GLint imageWidth, imageHeight, imageChannels;
+    // load image from file
+    GLubyte* data = stbi_load( FILENAME, &imageWidth, &imageHeight, &imageChannels, 0);
+
+    // if data was read from file
+    if( data ) {
+        const GLint STORAGE_TYPE = (imageChannels == 4 ? GL_RGBA : GL_RGB);
+
+        glGenTextures(NUM_TEXTURES, &textureHandle);
+        glBindTexture(GL_TEXTURE_2D, textureHandle);
+
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D,0,STORAGE_TYPE, imageWidth, imageHeight, 0, STORAGE_TYPE,GL_UNSIGNED_BYTE, data);
+
+        //this line was causing me to crash -> fprintf( stdout, "[INFO]: %s texture map read in with handle %d\n", FILENAME, textureHandle);
+
+        // release image memory from CPU - it now lives on the GPU
+        stbi_image_free(data);
+    } else {
+        // load failed
+        fprintf( stderr, "[ERROR]: Could not load texture map \"%s\"\n", FILENAME );
+    }
+
+    // return generated texture handle
+    return textureHandle;
 }
 
 void FPEngine::_updateScene() {
@@ -427,30 +516,30 @@ void FPEngine::movePlayersAndCameras() {
 
     //shoot buttons
     //TODO implement bullets to be semi auto
-    if(_keys[GLFW_KEY_LEFT_SHIFT]){
-        _bullets.push_back(new Bullet(
-                _lightingShaderProgram->getShaderProgramHandle(),
-                _lightingShaderUniformLocations.mvpMatrix,
-                _lightingShaderUniformLocations.normalMatrix,
-                _lightingShaderUniformLocations.materialColor,
-                _player1->getPosition(),
-                _player1->getDirection(),
-                _player1->getAngle(),
-                1
-        ));
-    }
-    if(_keys[GLFW_KEY_SLASH]){
-        _bullets.push_back(new Bullet(
-                _lightingShaderProgram->getShaderProgramHandle(),
-                _lightingShaderUniformLocations.mvpMatrix,
-                _lightingShaderUniformLocations.normalMatrix,
-                _lightingShaderUniformLocations.materialColor,
-                _player2->getPosition(),
-                _player2->getDirection(),
-                _player2->getAngle(),
-                2
-        ));
-    }
+//    if(_keys[GLFW_KEY_LEFT_SHIFT]){
+//        _bullets.push_back(new Bullet(
+//                _groundShaderProgram->getShaderProgramHandle(),
+//                _groundShaderUniformLocations.mvpMatrix,
+//                _groundShaderUniformLocations.normalMatrix,
+//                _groundShaderUniformLocations.materialColor,
+//                _player1->getPosition(),
+//                _player1->getDirection(),
+//                _player1->getAngle(),
+//                1
+//        ));
+//    }
+//    if(_keys[GLFW_KEY_SLASH]){
+//        _bullets.push_back(new Bullet(
+//                _groundShaderProgram->getShaderProgramHandle(),
+//                _groundShaderUniformLocations.mvpMatrix,
+//                _groundShaderUniformLocations.normalMatrix,
+//                _groundShaderUniformLocations.materialColor,
+//                _player2->getPosition(),
+//                _player2->getDirection(),
+//                _player2->getAngle(),
+//                2
+//        ));
+//    }
 }
 
 
@@ -496,10 +585,15 @@ void FPEngine::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewM
     // precompute the Model-View-Projection matrix on the CPU
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     // then send it to the shader on the GPU to apply to every vertex
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.mvpMatrix, mvpMtx);
-
-    glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(modelMtx)));
-    _lightingShaderProgram->setProgramUniform(_lightingShaderUniformLocations.normalMatrix, normalMatrix);
+    _groundShaderProgram->setProgramUniform(_groundShaderUniformLocations.mvpMatrix, mvpMtx);
+    glBindTexture(GL_TEXTURE_2D, _texHandles[TEXTURE_ID::GROUND]);
+    if(viewMtx == _freeCamPlayer1->getViewMatrix()) {
+        _groundShaderProgram->setProgramUniform(_groundShaderUniformLocations.viewPos, _freeCamPlayer1->getPosition());
+    }
+    else{
+        _groundShaderProgram->setProgramUniform(_groundShaderUniformLocations.viewPos, _freeCamPlayer2->getPosition());
+    }
+    _groundShaderProgram->setProgramUniform(_groundShaderUniformLocations.model, modelMtx);
 }
 
 
