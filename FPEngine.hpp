@@ -163,6 +163,7 @@ private:
     void movePlayersAndCameras();
     void moveBullets();
     void checkBulletCollisions();
+    void updateLights();
 
     //skybox method
     void _createSkybox();

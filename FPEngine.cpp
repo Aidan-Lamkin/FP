@@ -297,9 +297,7 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // use our lighting shader program
     _groundShaderProgram->useProgram();
     // draw the ground plane
-    /*TODO render using phong-illumination want
-     * to pass two lights that are positioned at players
-     * and are colored to match their health otherwise it is pretty dark
+    /*TODO
      * this covers second texture requirement (need one for ground)
      * */
     glm::mat4 groundModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE, 1.0f, WORLD_SIZE));
@@ -418,7 +416,9 @@ void FPEngine::_updateScene() {
     //detects if bullet hit an enemy, deletes the bullet if so and decreases enemy health
     checkBulletCollisions();
 
+
     //TODO: if player has not been hit for awhile start regenerating health
+    updateLights();
 }
 
 void FPEngine::movePlayersAndCameras() {
@@ -702,6 +702,26 @@ void FPEngine::_createSkybox() {
             stbi_image_free(data);
         }
     }
+}
+
+void FPEngine::updateLights() {
+    int health1 = _player1->health;
+    int health2 = _player2->health;
+
+    glm::vec3 lightColor1 = glm::vec3((double)(100.0 - health1) / 100.0, (double)health1 / 100.0,0);
+    glm::vec3 lightPosition1 = glm::vec3(_player1->getPosition().x, _player1->getPosition().y + 5, _player1->getPosition().z);
+    glm::vec3 lightColor2 = glm::vec3((double)(100.0 - health2) / 100.0, (double)health2 / 100.0,0);
+    glm::vec3 lightPosition2 = glm::vec3(_player2->getPosition().x, _player2->getPosition().y + 5, _player2->getPosition().z);
+
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
+    glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
+
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
+    glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
 }
 
 //*************************************************************************************
