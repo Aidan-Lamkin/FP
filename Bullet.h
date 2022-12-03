@@ -12,7 +12,7 @@
 class Bullet {
 public:
     //constructor and draw
-    Bullet(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation, GLint materialColorUniformLocation, glm::vec3 position, glm::vec3 direction, GLfloat angle, int shotBy);
+    Bullet(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint materialColorUniformLocation, glm::vec3 position, glm::vec3 direction, GLfloat angle, int shotBy);
     void drawBullet(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx);
 
     //move methods
@@ -37,7 +37,6 @@ private:
 
     struct ShaderProgramUniformLocations {
         GLint mvpMtx;
-        GLint normalMtx;
         GLint materialColor;
     } _shaderProgramUniformLocations;
 

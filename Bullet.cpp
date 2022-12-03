@@ -8,11 +8,10 @@
 #include <CSCI441/objects.hpp>
 #include <CSCI441/OpenGLUtils.hpp>
 
-Bullet::Bullet(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation, GLint normalMtxUniformLocation,
+Bullet::Bullet(GLuint shaderProgramHandle, GLint mvpMtxUniformLocation,
                GLint materialColorUniformLocation, glm::vec3 position, glm::vec3 direction, GLfloat angle, int shotBy) {
     _shaderProgramHandle = shaderProgramHandle;
     _shaderProgramUniformLocations.mvpMtx = mvpMtxUniformLocation;
-    _shaderProgramUniformLocations.normalMtx = normalMtxUniformLocation;
     _shaderProgramUniformLocations.materialColor = materialColorUniformLocation;
 
     _angle = angle;
@@ -52,8 +51,6 @@ void Bullet::drawBullet(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx
 void Bullet::_computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
     glProgramUniformMatrix4fv( _shaderProgramHandle, _shaderProgramUniformLocations.mvpMtx, 1, GL_FALSE, &mvpMtx[0][0] );
-    glm::mat3 normalMtx = glm::mat3( glm::transpose( glm::inverse( modelMtx )));
-    glProgramUniformMatrix3fv( _shaderProgramHandle, _shaderProgramUniformLocations.normalMtx, 1, GL_FALSE, &normalMtx[0][0] );
 }
 
 bool Bullet::checkBounds(GLfloat worldSize) {

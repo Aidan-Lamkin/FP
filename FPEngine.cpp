@@ -92,18 +92,19 @@ void FPEngine::handleKeyEvent(GLint key, GLint action) {
             case GLFW_KEY_I:
                 _player2->resetArms();
                 return;
+            case GLFW_KEY_LEFT_SHIFT:
+                player1CanShoot = true;
+                return;
+            case GLFW_KEY_SLASH:
+                player2CanShoot = true;
+                return;
             default:
                 break;
         }
     }
 }
 
-void FPEngine::handleMouseButtonEvent(GLint button, GLint action) {
-    // if the event is for the left mouse button
-    if( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-
-    }
-}
+void FPEngine::handleMouseButtonEvent(GLint button, GLint action) {}
 
 void FPEngine::handleCursorPositionEvent(glm::vec2 currMousePosition) {
     // if mouse hasn't moved in the window, prevent camera from flipping out
@@ -297,21 +298,12 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     // use our lighting shader program
     _groundShaderProgram->useProgram();
     // draw the ground plane
-    /*TODO
-     * this covers second texture requirement (need one for ground)
-     * */
     glm::mat4 groundModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE, 1.0f, WORLD_SIZE));
     _computeAndSendMatrixUniforms(groundModelMtx, viewMtx, projMtx);
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
 
     //draw players
-    /*TODO render players using cell shading also using
-     * the two lights at players corresponding to their health
-     * mapped from green to red
-     *
-     * Meets unique fragment requirement
-     */
 
     _playerShaderProgram->useProgram();
 
@@ -334,24 +326,20 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glm::mat4 mvpMtx2 = projMtx * viewMtx * modelMtx2;
 
     _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.mvpMatrix, mvpMtx2);
-    if(viewMtx == _freeCamPlayer1->getViewMatrix()) {
-        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.viewPos, _freeCamPlayer1->getPosition());
-    }
-    else{
-        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.viewPos, _freeCamPlayer2->getPosition());
-    }
     _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.model, modelMtx2);
     _player2->drawPlayer(modelMtx2, viewMtx, projMtx);
 
     //draw bullets
-    /*TODO render bullets using geometry shader by rendering quad
-     * Meets unique vertex/geometric/tesselation requirement
+    /*
      */
-//    for(Bullet* b: _bullets){
-//        glm::mat4 modelMtx(1.0f);
-//        modelMtx = glm::translate(modelMtx, b->getPosition());
-//        b->drawBullet(modelMtx, viewMtx, projMtx);
-//    }
+    for(Bullet* b: _bullets){
+        glm::mat4 modelMtx(1.0f);
+        modelMtx = glm::translate(modelMtx, b->getPosition());
+        glm::mat4 mvpMtx = projMtx * viewMtx * modelMtx;
+        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.mvpMatrix, mvpMtx);
+        _playerShaderProgram->setProgramUniform(_playerShaderUniformLocations.model, modelMtx);
+        b->drawBullet(modelMtx, viewMtx, projMtx);
+    }
 
     //draw skybox
     //meets one of the texture requirements
@@ -515,31 +503,30 @@ void FPEngine::movePlayersAndCameras() {
     _freeCamPlayer2->recomputeOrientation();
 
     //shoot buttons
-    //TODO implement bullets to be semi auto
-//    if(_keys[GLFW_KEY_LEFT_SHIFT]){
-//        _bullets.push_back(new Bullet(
-//                _groundShaderProgram->getShaderProgramHandle(),
-//                _groundShaderUniformLocations.mvpMatrix,
-//                _groundShaderUniformLocations.normalMatrix,
-//                _groundShaderUniformLocations.materialColor,
-//                _player1->getPosition(),
-//                _player1->getDirection(),
-//                _player1->getAngle(),
-//                1
-//        ));
-//    }
-//    if(_keys[GLFW_KEY_SLASH]){
-//        _bullets.push_back(new Bullet(
-//                _groundShaderProgram->getShaderProgramHandle(),
-//                _groundShaderUniformLocations.mvpMatrix,
-//                _groundShaderUniformLocations.normalMatrix,
-//                _groundShaderUniformLocations.materialColor,
-//                _player2->getPosition(),
-//                _player2->getDirection(),
-//                _player2->getAngle(),
-//                2
-//        ));
-//    }
+    if(_keys[GLFW_KEY_LEFT_SHIFT] && player1CanShoot){
+        _bullets.push_back(new Bullet(
+                _playerShaderProgram->getShaderProgramHandle(),
+                _playerShaderUniformLocations.mvpMatrix,
+                _playerShaderUniformLocations.materialColor,
+                _player1->getPosition(),
+                _player1->getDirection(),
+                _player1->getAngle(),
+                1
+        ));
+        player1CanShoot = false;
+    }
+    if(_keys[GLFW_KEY_SLASH] && player2CanShoot){
+        _bullets.push_back(new Bullet(
+                _playerShaderProgram->getShaderProgramHandle(),
+                _playerShaderUniformLocations.mvpMatrix,
+                _playerShaderUniformLocations.materialColor,
+                _player2->getPosition(),
+                _player2->getDirection(),
+                _player2->getAngle(),
+                2
+        ));
+        player2CanShoot = false;
+    }
 }
 
 

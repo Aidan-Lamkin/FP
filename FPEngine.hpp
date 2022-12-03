@@ -94,6 +94,9 @@ private:
         GLint viewPos;
     } _groundShaderUniformLocations;
 
+    bool player1CanShoot = true;
+    bool player2CanShoot = true;
+
     /// \desc stores the locations of all of our shader attributes
     struct groundShaderAttributeLocations {
         /// \desc vertex position location
