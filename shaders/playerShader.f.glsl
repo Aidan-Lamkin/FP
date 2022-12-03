@@ -57,5 +57,11 @@ void main() {
     float attenuation2 = clamp( 10.0 / d2, 0.0, 1.0);
     //add up each calculation and for both lights
 
-    fragColorOut = vec4(attenuation1 * (ambient1 + diffuse1 + specular1) +  attenuation2 * (ambient2 + diffuse2 + specular2), 1);
+    //cell shading calculations
+    vec4 nonRounded = vec4(attenuation1 * (ambient1 + diffuse1 + specular1) +  attenuation2 * (ambient2 + diffuse2 + specular2), 1);
+    float xFloor = floor(nonRounded.x * 10) / 10.0;
+    float yFloor = floor(nonRounded.y * 10) / 10.0;
+    float zFloor = floor(nonRounded.z * 10) / 10.0;
+    fragColorOut = vec4(xFloor, yFloor, zFloor, 1);
+
 }
