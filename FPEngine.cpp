@@ -266,6 +266,11 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     _lightingShaderProgram->useProgram();
 
     // draw the ground plane
+    /*TODO render using phong-illumination want
+     * to pass two lights that are positioned at players
+     * and are colored to match their health otherwise it is pretty dark
+     * this covers second texture requirement (need one for ground)
+     * */
     glm::mat4 groundModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE, 1.0f, WORLD_SIZE));
     _computeAndSendMatrixUniforms(groundModelMtx, viewMtx, projMtx);
 
@@ -276,6 +281,12 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
 
     //draw players
+    /*TODO render players using cell shading also using
+     * the two lights at players corresponding to their health
+     * mapped from green to red
+     *
+     * Meets unique fragment requirement
+     */
     glm::mat4 modelMtx(1.0f);
     modelMtx = glm::translate(modelMtx, _player1->getPosition());
     _player1->drawPlayer(modelMtx, viewMtx, projMtx);
@@ -285,6 +296,9 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     _player2->drawPlayer(modelMtx2, viewMtx, projMtx);
 
     //draw bullets
+    /*TODO render bullets using geometry shader by rendering quad
+     * Meets unique vertex/geometric/tesselation requirement
+     */
     for(Bullet* b: _bullets){
         glm::mat4 modelMtx(1.0f);
         modelMtx = glm::translate(modelMtx, b->getPosition());
@@ -292,12 +306,12 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     }
 
     //draw skybox
+    //meets one of the texture requirements
     glDepthFunc(GL_LEQUAL);
     _skyboxShaderProgram->useProgram();
     glm::mat4 v = glm::mat4(glm::mat3(viewMtx));
     glUniformMatrix4fv(_skyboxShaderUniformLocations.view, 1, GL_FALSE, &v[0][0]);
     glUniformMatrix4fv(_skyboxShaderUniformLocations.projection, 1, GL_FALSE, &projMtx[0][0]);
-
     glBindVertexArray(skyBoxVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
@@ -315,6 +329,7 @@ void FPEngine::_updateScene() {
     //detects if bullet hit an enemy, deletes the bullet if so and decreases enemy health
     checkBulletCollisions();
 
+    //TODO: if player has not been hit for awhile start regenerating health
 }
 
 void FPEngine::movePlayersAndCameras() {
@@ -411,6 +426,7 @@ void FPEngine::movePlayersAndCameras() {
     _freeCamPlayer2->recomputeOrientation();
 
     //shoot buttons
+    //TODO implement bullets to be semi auto
     if(_keys[GLFW_KEY_LEFT_SHIFT]){
         _bullets.push_back(new Bullet(
                 _lightingShaderProgram->getShaderProgramHandle(),
