@@ -79,6 +79,14 @@ private:
 
     /// \desc creates the ground VAO
     void _createGroundBuffers();
+    GLuint _grassVAO;
+    GLsizei _numGrassPoints;
+    void _createGrassBuffers();
+
+    float time = 0;
+
+    bool player1CanShoot = true;
+    bool player2CanShoot = true;
 
     /// \desc shader program that performs lighting
     CSCI441::ShaderProgram* _groundShaderProgram = nullptr;   // the wrapper for our shader program
@@ -94,15 +102,38 @@ private:
         GLint viewPos;
     } _groundShaderUniformLocations;
 
-    bool player1CanShoot = true;
-    bool player2CanShoot = true;
-
     /// \desc stores the locations of all of our shader attributes
     struct groundShaderAttributeLocations {
         /// \desc vertex position location
         GLint vPos;
         GLint normal;
     } _groundShaderAttributeLocations;
+
+    /// \desc shader program that performs lighting
+    CSCI441::ShaderProgram* _grassShaderProgram = nullptr;   // the wrapper for our shader program
+    /// \desc stores the locations of all of our shader uniforms
+    struct grassShaderUniformLocations {
+        GLint mvpMatrix;
+        GLint model;
+        GLint player1LightColor;
+        GLint player1LightPosition;
+        GLint player2LightColor;
+        GLint player2LightPosition;
+        GLint grassTexture;
+        GLint viewPos;
+        GLint time;
+    } _grassShaderUniformLocations;
+
+    /// \desc stores the locations of all of our shader attributes
+    struct grassShaderAttributeLocations {
+        /// \desc vertex position location
+        GLint vPos;
+        GLint normal;
+    } _grassShaderAttributeLocations;
+
+    std::vector<glm::vec3> _grassPositions;
+
+    void generateGrassPositions();
 
     /// \desc shader program that performs lighting
     CSCI441::ShaderProgram* _playerShaderProgram = nullptr;   // the wrapper for our shader program
@@ -153,11 +184,12 @@ private:
     GLuint _loadAndRegisterTexture(const char* FILENAME);
 
     /// \desc total number of textures in our scene
-    static constexpr GLuint NUM_TEXTURES = 1;
+    static constexpr GLuint NUM_TEXTURES = 2;
     /// \desc used to index through our texture array to give named access
     enum TEXTURE_ID {
         /// \desc metal texture
-        GROUND = 0
+        GROUND = 0,
+        GRASS = 1
     };
     /// \desc texture handles for our textures
     GLuint _texHandles[NUM_TEXTURES];

@@ -4,7 +4,6 @@
 #include <iostream>
 #include <stb_image.h>
 
-
 //*************************************************************************************
 //
 // Helper Functions
@@ -153,6 +152,20 @@ void FPEngine::_setupShaders() {
     _groundShaderAttributeLocations.vPos = _groundShaderProgram->getAttributeLocation("vPos");
     _groundShaderAttributeLocations.normal = _groundShaderProgram->getAttributeLocation("normal");
 
+    _grassShaderProgram = new CSCI441::ShaderProgram("shaders/grassShader.v.glsl", "shaders/grassShader.f.glsl");
+    _grassShaderUniformLocations.mvpMatrix = _grassShaderProgram->getUniformLocation("mvpMatrix");
+    _grassShaderUniformLocations.model = _grassShaderProgram->getUniformLocation("model");
+    _grassShaderUniformLocations.player1LightColor = _grassShaderProgram->getUniformLocation("player1LightColor");
+    _grassShaderUniformLocations.player1LightPosition = _grassShaderProgram->getUniformLocation("player1LightPosition");
+    _grassShaderUniformLocations.player2LightColor = _grassShaderProgram->getUniformLocation("player2LightColor");
+    _grassShaderUniformLocations.player2LightPosition = _grassShaderProgram->getUniformLocation("player2LightPosition");
+    _grassShaderUniformLocations.grassTexture = _grassShaderProgram->getUniformLocation("grassTexture");
+    _grassShaderUniformLocations.viewPos = _grassShaderProgram->getUniformLocation("viewPos");
+    _grassShaderUniformLocations.time = _grassShaderProgram->getUniformLocation("time");
+
+    _grassShaderAttributeLocations.vPos = _grassShaderProgram->getAttributeLocation("vPos");
+    _grassShaderAttributeLocations.normal = _grassShaderProgram->getAttributeLocation("normal");
+
     _playerShaderProgram = new CSCI441::ShaderProgram("shaders/playerShader.v.glsl","shaders/playerShader.f.glsl");
     _playerShaderUniformLocations.mvpMatrix = _playerShaderProgram->getUniformLocation("mvpMatrix");
     _playerShaderUniformLocations.model = _playerShaderProgram->getUniformLocation("model");
@@ -176,6 +189,8 @@ void FPEngine::_setupShaders() {
 //initializes player and two enemies
 void FPEngine::_setupBuffers() {
     CSCI441::setVertexAttributeLocations(_groundShaderAttributeLocations.vPos, _groundShaderAttributeLocations.normal);
+    CSCI441::setVertexAttributeLocations(_grassShaderAttributeLocations.vPos, _grassShaderAttributeLocations.normal);
+
 
     _player1 = new Player(_playerShaderProgram->getShaderProgramHandle(),
                           _playerShaderUniformLocations.mvpMatrix,
@@ -188,6 +203,7 @@ void FPEngine::_setupBuffers() {
                           glm::vec3(-25, .1, -25));
 
     _createGroundBuffers();
+    _createGrassBuffers();
     _createSkybox();
 
 }
@@ -228,6 +244,7 @@ void FPEngine::_createGroundBuffers() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     _texHandles[TEXTURE_ID::GROUND] = _loadAndRegisterTexture("data/bottom.jpg");
+
 }
 
 
@@ -246,13 +263,9 @@ void FPEngine::_setupScene() {
     _freeCamPlayer2->recomputeOrientation();
 
     glm::vec3 lightColor1 = glm::vec3(0,1,0);
-    glm::vec3 lightPosition1 = glm::vec3(10, 5 ,10);
-
-    //glm::vec3 lightPosition1 = glm::vec3(_player1->getPosition().x, _player1->getPosition().y + 5, _player1->getPosition().z);
+    glm::vec3 lightPosition1 = glm::vec3(_player1->getPosition().x, _player1->getPosition().y + 5, _player1->getPosition().z);
     glm::vec3 lightColor2 = glm::vec3(0,1,0);
-    glm::vec3 lightPosition2 = glm::vec3(-10, 5 ,-10);
-
-    //glm::vec3 lightPosition2 = glm::vec3(_player2->getPosition().x, _player2->getPosition().y + 5, _player2->getPosition().z);
+    glm::vec3 lightPosition2 = glm::vec3(_player2->getPosition().x, _player2->getPosition().y + 5, _player2->getPosition().z);
 
     glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
     glProgramUniform3fv(_groundShaderProgram->getShaderProgramHandle(), _groundShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
@@ -295,6 +308,20 @@ void FPEngine::_cleanupBuffers() {
 // Rendering / Drawing Functions - this is where the magic happens!
 
 void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
+    //draw skybox
+    //meets one of the texture requirements
+    glDepthFunc(GL_LEQUAL);
+    _skyboxShaderProgram->useProgram();
+    glm::mat4 v = glm::mat4(glm::mat3(viewMtx));
+    glUniformMatrix4fv(_skyboxShaderUniformLocations.view, 1, GL_FALSE, &v[0][0]);
+    glUniformMatrix4fv(_skyboxShaderUniformLocations.projection, 1, GL_FALSE, &projMtx[0][0]);
+    glBindVertexArray(skyBoxVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT,0);
+    glBindVertexArray(0);
+    glDepthFunc(GL_LESS);
+
     // use our lighting shader program
     _groundShaderProgram->useProgram();
     // draw the ground plane
@@ -303,8 +330,27 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
 
-    //draw players
+    //TODO use grass shader to load sprites of grass that sway
+    _grassShaderProgram->useProgram();
+    glBindTexture(GL_TEXTURE_2D, _texHandles[TEXTURE_ID::GRASS]);
+    _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.time, time);
+    if(viewMtx == _freeCamPlayer1->getViewMatrix()){
+        _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.viewPos, _freeCamPlayer1->getPosition());
+    }
+    else{
+        _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.viewPos, _freeCamPlayer2->getPosition());
+    }
+    glBindVertexArray(_grassVAO);
+    for(int i = 0; i < _grassPositions.size(); i++){
+        glm::mat4 model = glm::translate(glm::mat4(1.0f),_grassPositions[i]);
+        glm::mat4 mvp = projMtx * viewMtx * model;
+        _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.model, model);
+        _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.mvpMatrix, mvp);
+        glDrawElements(GL_TRIANGLE_STRIP, _numGrassPoints, GL_UNSIGNED_SHORT, (void*)0);
+    }
 
+
+    //draw players
     _playerShaderProgram->useProgram();
 
     glm::mat4 modelMtx(1.0f);
@@ -341,19 +387,7 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
         b->drawBullet(modelMtx, viewMtx, projMtx);
     }
 
-    //draw skybox
-    //meets one of the texture requirements
-    glDepthFunc(GL_LEQUAL);
-    _skyboxShaderProgram->useProgram();
-    glm::mat4 v = glm::mat4(glm::mat3(viewMtx));
-    glUniformMatrix4fv(_skyboxShaderUniformLocations.view, 1, GL_FALSE, &v[0][0]);
-    glUniformMatrix4fv(_skyboxShaderUniformLocations.projection, 1, GL_FALSE, &projMtx[0][0]);
-    glBindVertexArray(skyBoxVAO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT,0);
-    glBindVertexArray(0);
-    glDepthFunc(GL_LESS);
+
 }
 
 GLuint FPEngine::_loadAndRegisterTexture(const char* FILENAME) {
@@ -404,9 +438,10 @@ void FPEngine::_updateScene() {
     //detects if bullet hit an enemy, deletes the bullet if so and decreases enemy health
     checkBulletCollisions();
 
-
     //TODO: if player has not been hit for awhile start regenerating health
     updateLights();
+
+    time += .005f;
 }
 
 void FPEngine::movePlayersAndCameras() {
@@ -709,6 +744,59 @@ void FPEngine::updateLights() {
     glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
     glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
     glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
+
+    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
+    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
+    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
+    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
+}
+
+void FPEngine::generateGrassPositions() {
+    for(int i = 0; i < 500; i++){
+        double x = getRand() * 2 * WORLD_SIZE - WORLD_SIZE;
+        double z = getRand() * 2 * WORLD_SIZE - WORLD_SIZE;
+        _grassPositions.push_back(glm::vec3(x, 0, z));
+    }
+}
+
+void FPEngine::_createGrassBuffers() {
+    struct Vertex {
+        GLfloat x, y, z;
+        GLfloat normalX, normalY, normalZ;
+
+    };
+
+    Vertex grassQuad[4] = {
+            {0.0f, 0.0f, 0.0f, 0,0,1},
+            { 0.5f, 0.0f, 0.0f,0,0,1},
+            {0.0f, 0.5f,  0.0f,0,0,1},
+            { 0.5f, 0.5f,  0.0f,0,0,1}
+    };
+
+    GLushort indices[4] = {0,1,2,3};
+
+    _numGrassPoints = 4;
+
+    glGenVertexArrays(1, &_grassVAO);
+    glBindVertexArray(_grassVAO);
+
+    GLuint vbods[2];       // 0 - VBO, 1 - IBO
+    glGenBuffers(2, vbods);
+    glBindBuffer(GL_ARRAY_BUFFER, vbods[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(grassQuad), grassQuad, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(_grassShaderAttributeLocations.vPos);
+    glVertexAttribPointer(_grassShaderAttributeLocations.vPos, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+
+    glEnableVertexAttribArray(_grassShaderAttributeLocations.normal);
+    glVertexAttribPointer(_grassShaderAttributeLocations.normal, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    _texHandles[TEXTURE_ID::GRASS] = _loadAndRegisterTexture("data/grass.png");
+
+    generateGrassPositions();
 }
 
 //*************************************************************************************
