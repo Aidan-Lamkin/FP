@@ -343,6 +343,7 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     glBindVertexArray(_grassVAO);
     for(int i = 0; i < _grassPositions.size(); i++){
         glm::mat4 model = glm::translate(glm::mat4(1.0f),_grassPositions[i]);
+        model = glm::scale(model, glm::vec3(.5, .5, 0));
         glm::mat4 mvp = projMtx * viewMtx * model;
         _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.model, model);
         _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.mvpMatrix, mvp);
@@ -779,9 +780,9 @@ void FPEngine::_createGrassBuffers() {
 
     Vertex grassQuad[4] = {
             {0.0f, 0.0f, 0.0f, 0,0,1},
-            { 0.5f, 0.0f, 0.0f,0,0,1},
-            {0.0f, 0.5f,  0.0f,0,0,1},
-            { 0.5f, 0.5f,  0.0f,0,0,1}
+            { 1.0f, 0.0f, 0.0f,0,0,1},
+            {0.0f, 1.0f,  0.0f,0,0,1},
+            { 1.0f, 1.0f,  0.0f,0,0,1}
     };
 
     GLushort indices[4] = {0,1,2,3};
