@@ -437,11 +437,21 @@ void FPEngine::_updateScene() {
 
     //detects if bullet hit an enemy, deletes the bullet if so and decreases enemy health
     checkBulletCollisions();
+    time += .01f;
 
-    //TODO: if player has not been hit for awhile start regenerating health
+    if(time - _player1->timeSinceLastShot > 2){
+        if(_player1->health != 100){
+            _player1->health += 2;
+        }
+    }
+    if(time - _player2->timeSinceLastShot > 2){
+        if(_player2->health != 100){
+            _player2->health += 2;
+        }
+    }
     updateLights();
 
-    time += .005f;
+
 }
 
 void FPEngine::movePlayersAndCameras() {
@@ -652,6 +662,7 @@ void FPEngine::checkBulletCollisions() {
             if(_player1->health <= 0){
                 _player1->playerDied();
             }
+            _player1->timeSinceLastShot = time;
         }
         else if(d2 < hitRadius && _bullets[index]->shotBy != 2){
             hit = true;
@@ -659,6 +670,7 @@ void FPEngine::checkBulletCollisions() {
             if(_player2->health <= 0){
                 _player2->playerDied();
             }
+            _player2->timeSinceLastShot = time;
         }
         if(!hit){
             index++;

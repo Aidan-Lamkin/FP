@@ -18,6 +18,6 @@ void main() {
     vec3 newVPos = vPos + vec3(sin(time + vPos.x) * vPos.y * 0.5, 0.0, 0.0);
     gl_Position = mvpMatrix * vec4(newVPos, 1.0);
     FragPos = vec3(model * vec4(newVPos, 1.0));
-    texelCoords = vec2(newVPos.x, newVPos.z);
+    texelCoords = vec2(vPos.x, vPos.y);
     Normal = mat3(transpose(inverse(model))) * normal;
 }

@@ -47,6 +47,7 @@ public:
 
     int deathCount;
     int health = 100;
+    float timeSinceLastShot = 0.0f;
 private:
 
     //movement related members
