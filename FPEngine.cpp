@@ -451,7 +451,6 @@ void FPEngine::_updateScene() {
     }
     updateLights();
 
-
 }
 
 void FPEngine::movePlayersAndCameras() {
