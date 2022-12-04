@@ -70,14 +70,14 @@ private:
 
     std::vector<Bullet*> _bullets = std::vector<Bullet*>();
 
-    /// \desc the size of the world (controls the ground size and locations of buildings)
+    /// \desc the size of the world (controls the ground.jpg size and locations of buildings)
     static constexpr GLfloat WORLD_SIZE = 100.0f;
-    /// \desc VAO for our ground
+    /// \desc VAO for our ground.jpg
     GLuint _groundVAO;
-    /// \desc the number of points that make up our ground object
+    /// \desc the number of points that make up our ground.jpg object
     GLsizei _numGroundPoints;
 
-    /// \desc creates the ground VAO
+    /// \desc creates the ground.jpg VAO
     void _createGroundBuffers();
     GLuint _grassVAO;
     GLsizei _numGrassPoints;

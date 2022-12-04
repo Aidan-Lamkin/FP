@@ -243,7 +243,7 @@ void FPEngine::_createGroundBuffers() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    _texHandles[TEXTURE_ID::GROUND] = _loadAndRegisterTexture("data/bottom.jpg");
+    _texHandles[TEXTURE_ID::GROUND] = _loadAndRegisterTexture("data/ground.png");
 
 }
 
@@ -324,13 +324,12 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
     // use our lighting shader program
     _groundShaderProgram->useProgram();
-    // draw the ground plane
+    // draw the ground.jpg plane
     glm::mat4 groundModelMtx = glm::scale( glm::mat4(1.0f), glm::vec3(WORLD_SIZE, 1.0f, WORLD_SIZE));
     _computeAndSendMatrixUniforms(groundModelMtx, viewMtx, projMtx);
     glBindVertexArray(_groundVAO);
     glDrawElements(GL_TRIANGLE_STRIP, _numGroundPoints, GL_UNSIGNED_SHORT, (void*)0);
 
-    //TODO use grass shader to load sprites of grass that sway
     _grassShaderProgram->useProgram();
     glBindTexture(GL_TEXTURE_2D, _texHandles[TEXTURE_ID::GRASS]);
     _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.time, time);
@@ -764,7 +763,7 @@ void FPEngine::updateLights() {
 }
 
 void FPEngine::generateGrassPositions() {
-    for(int i = 0; i < 500; i++){
+    for(int i = 0; i < 1000; i++){
         double x = getRand() * 2 * WORLD_SIZE - WORLD_SIZE;
         double z = getRand() * 2 * WORLD_SIZE - WORLD_SIZE;
         _grassPositions.push_back(glm::vec3(x, 0, z));

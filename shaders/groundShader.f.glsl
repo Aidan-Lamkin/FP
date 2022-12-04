@@ -32,7 +32,7 @@ void main() {
         float shininess;
     };
 
-    //setting ground to be green rubber material
+    //setting ground.jpg to be green rubber material
     Material material = Material(vec3(0.0, 0.5, 0.0), vec3(0.4,0.5,0.4), vec3(.04, .7, .04), .078125);
     // get material color from corresponding texture coordinate
     vec3 materialColor = vec3(texture(groundTexture, texelCoords));
