@@ -239,5 +239,6 @@ void Player::playerDied() {
     float z = ((GLfloat)rand() / (GLfloat)RAND_MAX) * 200 - 100;
     _position = glm::vec3(x,.1,z);
     health = 100;
+    _outOfBounds = false;
 
 }
