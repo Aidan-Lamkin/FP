@@ -1,6 +1,7 @@
 #include "FPEngine.hpp"
 
 #include <CSCI441/objects.hpp>
+#include <CSCI441/TextureUtils.hpp>
 #include <iostream>
 #include <stb_image.h>
 
@@ -155,12 +156,7 @@ void FPEngine::_setupShaders() {
     _grassShaderProgram = new CSCI441::ShaderProgram("shaders/grassShader.v.glsl", "shaders/grassShader.f.glsl");
     _grassShaderUniformLocations.mvpMatrix = _grassShaderProgram->getUniformLocation("mvpMatrix");
     _grassShaderUniformLocations.model = _grassShaderProgram->getUniformLocation("model");
-    _grassShaderUniformLocations.player1LightColor = _grassShaderProgram->getUniformLocation("player1LightColor");
-    _grassShaderUniformLocations.player1LightPosition = _grassShaderProgram->getUniformLocation("player1LightPosition");
-    _grassShaderUniformLocations.player2LightColor = _grassShaderProgram->getUniformLocation("player2LightColor");
-    _grassShaderUniformLocations.player2LightPosition = _grassShaderProgram->getUniformLocation("player2LightPosition");
     _grassShaderUniformLocations.grassTexture = _grassShaderProgram->getUniformLocation("grassTexture");
-    _grassShaderUniformLocations.viewPos = _grassShaderProgram->getUniformLocation("viewPos");
     _grassShaderUniformLocations.time = _grassShaderProgram->getUniformLocation("time");
 
     _grassShaderAttributeLocations.vPos = _grassShaderProgram->getAttributeLocation("vPos");
@@ -243,7 +239,7 @@ void FPEngine::_createGroundBuffers() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    _texHandles[TEXTURE_ID::GROUND] = _loadAndRegisterTexture("data/ground.png");
+    _texHandles[TEXTURE_ID::GROUND] = CSCI441::TextureUtils::loadAndRegisterTexture("data/ground.png");
 
 }
 
@@ -333,16 +329,11 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
     _grassShaderProgram->useProgram();
     glBindTexture(GL_TEXTURE_2D, _texHandles[TEXTURE_ID::GRASS]);
     _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.time, time);
-    if(viewMtx == _freeCamPlayer1->getViewMatrix()){
-        _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.viewPos, _freeCamPlayer1->getPosition());
-    }
-    else{
-        _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.viewPos, _freeCamPlayer2->getPosition());
-    }
+
     glBindVertexArray(_grassVAO);
     for(int i = 0; i < _grassPositions.size(); i++){
         glm::mat4 model = glm::translate(glm::mat4(1.0f),_grassPositions[i]);
-        model = glm::scale(model, glm::vec3(.5, .5, 0));
+        model = glm::scale(model, glm::vec3(.75, .75, 0));
         glm::mat4 mvp = projMtx * viewMtx * model;
         _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.model, model);
         _grassShaderProgram->setProgramUniform(_grassShaderUniformLocations.mvpMatrix, mvp);
@@ -390,44 +381,6 @@ void FPEngine::_renderScene(glm::mat4 viewMtx, glm::mat4 projMtx) const {
 
 }
 
-GLuint FPEngine::_loadAndRegisterTexture(const char* FILENAME) {
-    // our handle to the GPU
-    GLuint textureHandle = 0;
-
-    // enable setting to prevent image from being upside down
-    stbi_set_flip_vertically_on_load(true);
-
-    // will hold image parameters after load
-    GLint imageWidth, imageHeight, imageChannels;
-    // load image from file
-    GLubyte* data = stbi_load( FILENAME, &imageWidth, &imageHeight, &imageChannels, 0);
-
-    // if data was read from file
-    if( data ) {
-        const GLint STORAGE_TYPE = (imageChannels == 4 ? GL_RGBA : GL_RGB);
-
-        glGenTextures(NUM_TEXTURES, &textureHandle);
-        glBindTexture(GL_TEXTURE_2D, textureHandle);
-
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexImage2D(GL_TEXTURE_2D,0,STORAGE_TYPE, imageWidth, imageHeight, 0, STORAGE_TYPE,GL_UNSIGNED_BYTE, data);
-
-        //this line was causing me to crash -> fprintf( stdout, "[INFO]: %s texture map read in with handle %d\n", FILENAME, textureHandle);
-
-        // release image memory from CPU - it now lives on the GPU
-        stbi_image_free(data);
-    } else {
-        // load failed
-        fprintf( stderr, "[ERROR]: Could not load texture map \"%s\"\n", FILENAME );
-    }
-
-    // return generated texture handle
-    return textureHandle;
-}
 
 void FPEngine::_updateScene() {
     movePlayersAndCameras();
@@ -755,11 +708,6 @@ void FPEngine::updateLights() {
     glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
     glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
     glProgramUniform3fv(_playerShaderProgram->getShaderProgramHandle(), _playerShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
-
-    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player1LightColor, 1, &lightColor1[0]);
-    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player1LightPosition, 1, &lightPosition1[0]);
-    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player2LightColor, 1, &lightColor2[0]);
-    glProgramUniform3fv(_grassShaderProgram->getShaderProgramHandle(), _grassShaderUniformLocations.player2LightPosition, 1, &lightPosition2[0]);
 }
 
 void FPEngine::generateGrassPositions() {
@@ -805,7 +753,7 @@ void FPEngine::_createGrassBuffers() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbods[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    _texHandles[TEXTURE_ID::GRASS] = _loadAndRegisterTexture("data/grass.png");
+    _texHandles[TEXTURE_ID::GRASS] = CSCI441::TextureUtils::loadAndRegisterTexture("data/grass.jpg");
 
     generateGrassPositions();
 }

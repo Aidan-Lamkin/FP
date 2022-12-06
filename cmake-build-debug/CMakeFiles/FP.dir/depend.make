@@ -350,6 +350,7 @@ CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/OpenGLEngine.hpp
 CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/OpenGLUtils.hpp
 CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/ShaderProgram.hpp
 CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/ShaderUtils.hpp
+CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/TextureUtils.hpp
 CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/objects.hpp
 CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/CSCI441/teapot.hpp
 CMakeFiles/FP.dir/FPEngine.cpp.o: /usr/local/include/GL/glew.h

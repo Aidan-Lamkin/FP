@@ -115,12 +115,7 @@ private:
     struct grassShaderUniformLocations {
         GLint mvpMatrix;
         GLint model;
-        GLint player1LightColor;
-        GLint player1LightPosition;
-        GLint player2LightColor;
-        GLint player2LightPosition;
         GLint grassTexture;
-        GLint viewPos;
         GLint time;
     } _grassShaderUniformLocations;
 
@@ -180,8 +175,6 @@ private:
     /// \param viewMtx camera view matrix
     /// \param projMtx camera projection matrix
     void _computeAndSendMatrixUniforms(glm::mat4 modelMtx, glm::mat4 viewMtx, glm::mat4 projMtx) const;
-
-    GLuint _loadAndRegisterTexture(const char* FILENAME);
 
     /// \desc total number of textures in our scene
     static constexpr GLuint NUM_TEXTURES = 2;
